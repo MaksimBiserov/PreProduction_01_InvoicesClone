@@ -1,0 +1,3 @@
+<aura:component implements="force:lightningQuickAction">
+    <c:cloneLwc></c:cloneLwc>
+</aura:component>
