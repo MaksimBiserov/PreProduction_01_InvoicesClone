@@ -1,11 +1,12 @@
 public with sharing class RecordCloner {
-
-    @AuraEnabled
-    public static String cloneSObject(String recordId) {
+	
+	@AuraEnabled
+	public static String getStringFields(String recordId) {
+		String result = '';
+		List<String> objectFields = new List<String>();
         Map<String, Schema.SObjectType> describeMap = Schema.getGlobalDescribe(); // iterate objects to find the object which has keyPrefix
         String keyPrefix = recordId.substring(0,3); // left 3 symbols of record ID
         String objectType = ''; // SObject API Name
-        Set<String> objectFields = new Set<String>();
         String queryExpression = 'SELECT ';
 
         System.debug('recordId: ' + recordId);
@@ -23,24 +24,32 @@ public with sharing class RecordCloner {
         System.debug('objectType: ' + objectType);
 
         for(Schema.FieldSetMember field : getInvoiceFields()) { // get elements of FieldSet
-            queryExpression += '' + field.getFieldPath() + ', ';
+            objectFields.add(field.getFieldPath());
             System.debug('field: ' + field.getFieldPath());
         }
 
-        queryExpression = queryExpression.removeEnd(', ');
-        queryExpression += ' FROM ' + objectType + ' WHERE Id = \'' + recordId + '\'';
-
+		String queryFields = String.join(objectFields, ',');
+        queryExpression += '' + queryFields + ' FROM ' + objectType + ' WHERE Id =: recordId';
         System.debug('queryExpression: ' + queryExpression);
 
-        SObject sourceObject = Database.query(queryExpression);
-        System.debug('sourceObject: ' + sourceObject);
+		SObject currentObject = Database.query(queryExpression);
+        
+		for(String field : objectFields) {
+			String value = (String)currentObject.get(field);
 
-        SObject newObject = sourceObject.clone(false, false, false, false); // clone without details
-        System.debug('newObject: ' + newObject);
+			if(value != null) {
+                result += '\'' + field + '\' : \'' + value + '\' , ';
+			}
 
-        insert newObject;
-        return newObject.Id;
-    }
+            System.debug('field: ' + field);
+            System.debug('value: ' + value);
+		}
+
+        result += '\'External_Id__c\' : \'' + recordId + '\'';
+        System.debug('result: ' + result);
+
+		return result;
+	}
 
     // get fieldset Invoice_Fields of Invoice__c object
     public static List<Schema.FieldSetMember> getInvoiceFields() {

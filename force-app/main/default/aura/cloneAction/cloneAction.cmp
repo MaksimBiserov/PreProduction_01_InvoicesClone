@@ -1,3 +1,8 @@
-<aura:component implements="force:lightningQuickAction">
-    <c:cloneLwc></c:cloneLwc>
+<aura:component implements="force:lightningQuickActionWithoutHeader, force:hasRecordId"
+                description="cloneAction"
+                controller="RecordCloner">
+	<aura:attribute name="recordId" type="String"/>
+	<aura:attribute name="cloneWithItems" type="Boolean" default="false"/>
+	<aura:attribute name="defaultFieldsValues" type="String"/>
+	<aura:handler name="init" value="{!this}" action="{!c.doInit}"/>
 </aura:component>
